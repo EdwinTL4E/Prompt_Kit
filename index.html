@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Prompt Kit</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0c0f;
+    --surface: #13131a;
+    --surface2: #1a1a24;
+    --surface3: #22222f;
+    --border: #2a2a3a;
+    --border-active: #4a4a6a;
+    --accent: #7c6af7;
+    --accent-glow: rgba(124, 106, 247, 0.18);
+    --accent2: #40c8b0;
+    --text: #e8e8f0;
+    --text-muted: #7070a0;
+    --text-dim: #4a4a6a;
+    --success: #3dd68c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,106,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,247,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 40px;
+  }
+
+  .header-tag {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-tag::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 680px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .container { padding: 20px 16px 100px; }
+    header { margin-bottom: 20px; }
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: sticky;
+    top: 24px;
+  }
+
+  .sidebar-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  .prompt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .prompt-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    width: 100%;
+  }
+
+  .prompt-btn:hover {
+    border-color: var(--border-active);
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  .prompt-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    color: var(--text);
+  }
+
+  .prompt-btn.active .btn-num {
+    color: var(--accent);
+  }
+
+  .btn-num {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-weight: 500;
+    min-width: 16px;
+    transition: color 0.15s;
+  }
+
+  .btn-icon {
+    font-size: 13px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .btn-label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Mobile bottom nav ── */
+  .mobile-nav {
+    display: none;
+  }
+
+  @media (max-width: 680px) {
+    .mobile-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 100;
+      padding: 0;
+      height: 64px;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    /* "Prompts" toggle button */
+    .mobile-nav-toggle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-width: 72px;
+      padding: 0 12px;
+      background: none;
+      border: none;
+      border-right: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      transition: color 0.15s;
+    }
+
+    .mobile-nav-toggle .toggle-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .mobile-nav-toggle.open,
+    .mobile-nav-toggle:active {
+      color: var(--accent);
+    }
+
+    /* Current prompt indicator */
+    .mobile-current {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .mobile-current-icon { font-size: 18px; flex-shrink: 0; }
+    .mobile-current-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mobile-current-num {
+      font-size: 10px;
+      color: var(--accent);
+      background: var(--accent-glow);
+      border: 1px solid rgba(124,106,247,0.3);
+      padding: 2px 7px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Prev / Next arrows */
+    .mobile-nav-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      background: none;
+      border: none;
+      border-left: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .mobile-nav-arrow:active { color: var(--accent); }
+
+    /* Drawer */
+    .mobile-drawer {
+      position: fixed;
+      bottom: 64px; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 99;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 60vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.25s ease;
+    }
+
+    .mobile-drawer.open {
+      transform: translateY(0);
+    }
+
+    /* Larger touch targets on mobile for edit buttons */
+    .edit-btn {
+      padding: 6px 14px !important;
+      font-size: 11px !important;
+      min-height: 36px;
+    }
+
+    /* Bigger font in fields on mobile */
+    .field-static,
+    .context-input,
+    .editable-input {
+      font-size: 14px !important;
+    }
+
+    .preview-box {
+      font-size: 13px !important;
+      max-height: 160px;
+    }
+
+    /* Copy button full-width on mobile */
+    .copy-btn {
+      padding: 16px 20px !important;
+      font-size: 15px !important;
+    }
+  }
+
+  /* Main panel */
+  .main-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-icon {
+    font-size: 18px;
+  }
+
+  .panel-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .panel-num {
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-glow);
+    border: 1px solid rgba(124,106,247,0.3);
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  /* Prompt form */
+  .prompt-form {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .field-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .field-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .field-label::before {
+    content: '';
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--accent2);
+    display: inline-block;
+  }
+
+  .field-static {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .context-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 90px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+
+  .context-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .context-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,106,247,0.1);
+  }
+
+  .field-static.constraints {
+    white-space: pre-line;
+  }
+
+  .field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .edit-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .edit-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .edit-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(64,200,176,0.08); }
+  .reset-btn:hover { border-color: var(--text-dim); color: var(--text-muted); }
+
+  .editable-input {
+    background: var(--surface2);
+    border: 1px solid var(--accent2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    width: 100%;
+    box-shadow: 0 0 0 3px rgba(64,200,176,0.08);
+    transition: border-color 0.15s;
+  }
+
+  .editable-input:focus { border-color: var(--accent2); }
+
+  /* Preview & actions */
+  .preview-section {
+    margin: 0 22px 22px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+
+  .preview-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .char-count {
+    font-size: 9px;
+    color: var(--text-dim);
+  }
+
+  .preview-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    max-height: 220px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .preview-box::-webkit-scrollbar { width: 4px; }
+  .preview-box::-webkit-scrollbar-track { background: transparent; }
+  .preview-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .preview-box .highlight {
+    color: var(--accent);
+  }
+
+  /* Copy button */
+  .copy-btn {
+    margin: 0 22px 22px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 13px 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    width: calc(100% - 44px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    letter-spacing: 0.04em;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .copy-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s;
+  }
+
+  .copy-btn:hover::before { background: rgba(255,255,255,0.1); }
+  .copy-btn:active { transform: scale(0.98); }
+
+  .copy-btn.copied {
+    background: var(--success);
+  }
+
+  /* Tip bar */
+  .tip-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+
+  .tip-bar .tip-icon {
+    color: var(--accent);
+    font-size: 13px;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Prompt <span>Kit</span></h1>
+    <div class="subtitle">// 10 moderne prompts · invullen · kopiëren · plakken</div>
+  </header>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-label">Kies prompt type</div>
+      <div class="prompt-list" id="promptList"></div>
+    </div>
+
+    <!-- Main panel -->
+    <div>
+      <div class="main-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="panel-icon" id="panelIcon"></span>
+            <span class="panel-name" id="panelName"></span>
+          </div>
+          <span class="panel-num" id="panelNum"></span>
+        </div>
+
+        <div class="prompt-form" id="promptForm"></div>
+
+        <div class="preview-section">
+          <div class="preview-label">
+            <span>Preview prompt</span>
+            <span class="char-count" id="charCount">0 tekens</span>
+          </div>
+          <div class="preview-box" id="previewBox"></div>
+        </div>
+
+        <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">
+          <span id="copyIcon">⎘</span>
+          <span id="copyLabel">Kopieer naar klembord</span>
+        </button>
+      </div>
+
+      <div class="tip-bar">
+        <span class="tip-icon">✦</span>
+        <span>Korter = vaak beter. Vul de context in, laat het model de aanpak bepalen.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const prompts = [
+  {
+    num: 1,
+    icon: "⚡",
+    label: "Probleem oplossen",
+    doel: "Los dit probleem zo effectief mogelijk op.",
+    contextPlaceholder: "Beschrijf het probleem en de situatie...",
+    constraints: "- Oplossing moet praktisch uitvoerbaar zijn",
+    slottext: "Kies zelf de beste aanpak.",
+  },
+  {
+    num: 2,
+    icon: "🔍",
+    label: "Situatie analyseren",
+    doel: "Geef inzicht in wat hier echt speelt.",
+    contextPlaceholder: "Omschrijf de situatie die je wilt analyseren...",
+    constraints: "- Benoem zowel zichtbare als onderliggende factoren",
+    slottext: "Geef je analyse en belangrijkste inzichten.",
+  },
+  {
+    num: 3,
+    icon: "⚖️",
+    label: "Besluit nemen",
+    doel: "Help mij een goede beslissing nemen.",
+    contextPlaceholder: "Beschrijf de opties en de situatie...",
+    constraints: "- Weeg risico's en impact",
+    slottext: "Wat zou jij doen en waarom?",
+  },
+  {
+    num: 4,
+    icon: "✍️",
+    label: "Tekst schrijven",
+    doel: "Schrijf een heldere en overtuigende tekst.",
+    contextPlaceholder: "Omschrijf de inhoud en de doelgroep...",
+    constraints: "- Praktisch en begrijpelijk",
+    slottext: "Gebruik je eigen structuur om dit zo sterk mogelijk te maken.",
+  },
+  {
+    num: 5,
+    icon: "✦",
+    label: "Iets verbeteren",
+    doel: "Maak dit beter.",
+    contextPlaceholder: "Plak hier de huidige tekst, aanpak of plan...",
+    constraints: "- Houd wat werkt, verbeter wat niet werkt",
+    slottext: "Geef een verbeterde versie.",
+  },
+  {
+    num: 6,
+    icon: "🗺",
+    label: "Strategie bepalen",
+    doel: "Ontwikkel een effectieve strategie.",
+    contextPlaceholder: "Beschrijf de situatie en de doelstelling...",
+    constraints: "- Realistisch uitvoerbaar\n- Gericht op impact",
+    slottext: "Geef de beste aanpak en waarom die werkt.",
+  },
+  {
+    num: 7,
+    icon: "◈",
+    label: "Feedback krijgen",
+    doel: "Geef scherpe en eerlijke feedback.",
+    contextPlaceholder: "Plak hier de tekst, het idee of het plan...",
+    constraints: "- Wees kritisch waar nodig\n- Benoem ook wat goed is",
+    slottext: "Wat kan beter en hoe?",
+  },
+  {
+    num: 8,
+    icon: "💡",
+    label: "Ideeën genereren",
+    doel: "Kom met sterke en bruikbare ideeën.",
+    contextPlaceholder: "Beschrijf het probleem of de uitdaging...",
+    constraints: "- Origineel maar toepasbaar",
+    slottext: "Geef je beste ideeën.",
+  },
+  {
+    num: 9,
+    icon: "◎",
+    label: "Samenvatten + duiden",
+    doel: "Vat dit samen en haal de belangrijkste inzichten eruit.",
+    contextPlaceholder: "Plak hier de tekst of het document...",
+    constraints: "- Focus op wat echt belangrijk is",
+    slottext: "Geef een heldere samenvatting met kernpunten.",
+  },
+  {
+    num: 10,
+    icon: "⚙",
+    label: "Werk slimmer maken",
+    doel: "Maak dit proces slimmer en efficiënter.",
+    contextPlaceholder: "Beschrijf het huidige proces of de werkwijze...",
+    constraints: "- Minder complexiteit\n- Meer effectiviteit",
+    slottext: "Wat zou jij veranderen?",
+  },
+];
+
+let currentIndex = 0;
+
+// Store original defaults
+const defaults = prompts.map(p => ({ doel: p.doel, constraints: p.constraints }));
+
+// Load saved customizations from localStorage
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem('promptkit_customizations');
+    if (saved) {
+      const data = JSON.parse(saved);
+      data.forEach((item, i) => {
+        if (prompts[i]) {
+          if (item.doel) prompts[i].doel = item.doel;
+          if (item.constraints) prompts[i].constraints = item.constraints;
+        }
+      });
+    }
+  } catch(e) {}
+}
+
+function saveToStorage() {
+  try {
+    const data = prompts.map(p => ({ doel: p.doel, constraints: p.constraints }));
+    localStorage.setItem('promptkit_customizations', JSON.stringify(data));
+  } catch(e) {}
+}
+
+function resetField(field) {
+  const p = prompts[currentIndex];
+  const def = defaults[currentIndex];
+
+  if (field === 'doel') {
+    p.doel = def.doel;
+    const input = document.getElementById('doelInput');
+    if (input) {
+      input.value = def.doel;
+    } else {
+      document.getElementById('doelContainer').innerHTML = `<div class="field-static">${def.doel}</div>`;
+    }
+    saveToStorage();
+  }
+
+  if (field === 'constraints') {
+    p.constraints = def.constraints;
+    const input = document.getElementById('constraintsInput');
+    if (input) {
+      input.value = def.constraints;
+    } else {
+      document.getElementById('constraintsContainer').innerHTML = `<div class="field-static constraints">${def.constraints}</div>`;
+    }
+    saveToStorage();
+  }
+
+  updatePreview();
+}
+
+function buildPromptText(p, contextVal) {
+  const ctx = contextVal || '[context invullen]';
+  const doel = document.getElementById('doelInput')?.value.trim() || p.doel;
+  const constraints = document.getElementById('constraintsInput')?.value.trim() || p.constraints;
+  return `Doel:\n${doel}\n\nContext:\n${ctx}\n\nRandvoorwaarden:\n${constraints}\n\n${p.slottext}`;
+}
+
+function renderList() {
+  const list = document.getElementById('promptList');
+  list.innerHTML = '';
+  prompts.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'prompt-btn' + (i === currentIndex ? ' active' : '');
+    btn.innerHTML = `<span class="btn-num">${String(p.num).padStart(2,'0')}</span><span class="btn-icon">${p.icon}</span><span class="btn-label">${p.label}</span>`;
+    btn.onclick = () => selectPrompt(i);
+    list.appendChild(btn);
+  });
+}
+
+// Track edit state per prompt
+let editState = { doel: false, constraints: false };
+
+function toggleEdit(field) {
+  editState[field] = !editState[field];
+  const p = prompts[currentIndex];
+
+  if (field === 'doel') {
+    const container = document.getElementById('doelContainer');
+    const btn = document.getElementById('doelEditBtn');
+    if (editState.doel) {
+      container.innerHTML = `<textarea class="editable-input" id="doelInput" rows="2" oninput="updatePreview()">${p.doel}</textarea>`;
+      btn.textContent = 'Opslaan';
+      btn.classList.add('active');
+      document.getElementById('doelInput').focus();
+    } else {
+      const val = document.getElementById('doelInput')?.value.trim() || p.doel;
+      prompts[currentIndex].doel = val;
+      container.innerHTML = `<div class="field-static" id="doelStatic">${val}</div>`;
+      btn.textContent = 'Bewerken';
+      btn.classList.remove('active');
+      saveToStorage();
+      updatePreview();
+    }
+  }
+
+  if (field === 'constraints') {
+    const container = document.getElementById('constraintsContainer');
+    const btn = document.getElementById('constraintsEditBtn');
+    if (editState.constraints) {
+      container.innerHTML = `<textarea class="editable-input" id="constraintsInput" rows="3" oninput="updatePreview()">${p.constraints}</textarea>`;
+      btn.textContent = 'Opslaan';
+      btn.classList.add('active');
+      document.getElementById('constraintsInput').focus();
+    } else {
+      const val = document.getElementById('constraintsInput')?.value.trim() || p.constraints;
+      prompts[currentIndex].constraints = val;
+      container.innerHTML = `<div class="field-static constraints">${val}</div>`;
+      btn.textContent = 'Bewerken';
+      btn.classList.remove('active');
+      saveToStorage();
+      updatePreview();
+    }
+  }
+}
+
+function renderPanel() {
+  editState = { doel: false, constraints: false };
+  const p = prompts[currentIndex];
+  document.getElementById('panelIcon').textContent = p.icon;
+  document.getElementById('panelName').textContent = p.label;
+  document.getElementById('panelNum').textContent = `#${String(p.num).padStart(2,'0')}`;
+
+  const form = document.getElementById('promptForm');
+  form.innerHTML = `
+    <div class="field-block">
+      <div class="field-header">
+        <div class="field-label">Doel</div>
+        <div style="display:flex;gap:5px;">
+          <button class="edit-btn" id="doelEditBtn" onclick="toggleEdit('doel')">Bewerken</button>
+          <button class="edit-btn reset-btn" onclick="resetField('doel')" title="Zet terug naar standaard">↺ Reset</button>
+        </div>
+      </div>
+      <div id="doelContainer"><div class="field-static">${p.doel}</div></div>
+    </div>
+    <div class="field-block">
+      <div class="field-label">Context</div>
+      <textarea class="context-input" id="contextInput" placeholder="${p.contextPlaceholder}" rows="4" oninput="updatePreview()"></textarea>
+    </div>
+    <div class="field-block">
+      <div class="field-header">
+        <div class="field-label">Randvoorwaarden</div>
+        <div style="display:flex;gap:5px;">
+          <button class="edit-btn" id="constraintsEditBtn" onclick="toggleEdit('constraints')">Bewerken</button>
+          <button class="edit-btn reset-btn" onclick="resetField('constraints')" title="Zet terug naar standaard">↺ Reset</button>
+        </div>
+      </div>
+      <div id="constraintsContainer"><div class="field-static constraints">${p.constraints}</div></div>
+    </div>
+  `;
+
+  updatePreview();
+}
+
+function updatePreview() {
+  const p = prompts[currentIndex];
+  const ctx = (document.getElementById('contextInput')?.value || '').trim();
+  const text = buildPromptText(p, ctx || null);
+
+  const box = document.getElementById('previewBox');
+  // Highlight context placeholder
+  const highlighted = text.replace(/\[context invullen\]/g, '<span class="highlight">[context invullen]</span>');
+  box.innerHTML = highlighted;
+
+  document.getElementById('charCount').textContent = text.length + ' tekens';
+}
+
+function selectPrompt(i) {
+  currentIndex = i;
+  renderList();
+  renderPanel();
+  updateMobileNav();
+
+  // Reset copy button
+  const btn = document.getElementById('copyBtn');
+  btn.classList.remove('copied');
+  document.getElementById('copyLabel').textContent = 'Kopieer naar klembord';
+  document.getElementById('copyIcon').textContent = '⎘';
+}
+
+
+
+let drawerOpen = false;
+
+function updateMobileNav() {
+  const p = prompts[currentIndex];
+  document.getElementById('mobileIcon').textContent = p.icon;
+  document.getElementById('mobileLabel').textContent = p.label;
+  document.getElementById('mobileNum').textContent = `#${String(p.num).padStart(2,'0')}`;
+}
+
+function renderListMobile() {
+  const list = document.getElementById('promptListMobile');
+  list.innerHTML = '';
+  prompts.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'prompt-btn' + (i === currentIndex ? ' active' : '');
+    btn.innerHTML = `<span class="btn-num">${String(p.num).padStart(2,'0')}</span><span class="btn-icon">${p.icon}</span><span class="btn-label">${p.label}</span>`;
+    btn.onclick = () => { selectPrompt(i); closeDrawer(); };
+    list.appendChild(btn);
+  });
+}
+
+function toggleDrawer() {
+  drawerOpen ? closeDrawer() : openDrawer();
+}
+
+function openDrawer() {
+  drawerOpen = true;
+  document.getElementById('mobileDrawer').classList.add('open');
+  document.getElementById('mobileToggle').classList.add('open');
+  renderListMobile();
+}
+
+function closeDrawer() {
+  drawerOpen = false;
+  document.getElementById('mobileDrawer').classList.remove('open');
+  document.getElementById('mobileToggle').classList.remove('open');
+}
+
+function prevPrompt() {
+  selectPrompt((currentIndex - 1 + prompts.length) % prompts.length);
+}
+
+function nextPrompt() {
+  selectPrompt((currentIndex + 1) % prompts.length);
+}
+
+// Improved clipboard for iOS Safari
+function copyPrompt() {
+  const p = prompts[currentIndex];
+  const ctx = (document.getElementById('contextInput')?.value || '').trim();
+  const text = buildPromptText(p, ctx || null);
+
+  const btn = document.getElementById('copyBtn');
+
+  function markCopied() {
+    btn.classList.add('copied');
+    document.getElementById('copyLabel').textContent = 'Gekopieerd!';
+    document.getElementById('copyIcon').textContent = '✓';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      document.getElementById('copyLabel').textContent = 'Kopieer naar klembord';
+      document.getElementById('copyIcon').textContent = '⎘';
+    }, 2000);
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(markCopied).catch(() => fallbackCopy(text, markCopied));
+  } else {
+    fallbackCopy(text, markCopied);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); cb(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+// Init — wacht tot volledige DOM geladen is (incl. mobile nav HTML verderop)
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromStorage();
+  renderList();
+  renderPanel();
+  updateMobileNav();
+});
+</script>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-toggle" id="mobileToggle" onclick="toggleDrawer()">
+    <span class="toggle-icon">☰</span>
+    <span>Prompts</span>
+  </button>
+  <div class="mobile-current">
+    <span class="mobile-current-icon" id="mobileIcon"></span>
+    <span class="mobile-current-label" id="mobileLabel"></span>
+    <span class="mobile-current-num" id="mobileNum"></span>
+  </div>
+  <button class="mobile-nav-arrow" onclick="prevPrompt()" title="Vorige">‹</button>
+  <button class="mobile-nav-arrow" onclick="nextPrompt()" title="Volgende">›</button>
+</nav>
+
+<!-- Mobile drawer -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="prompt-list" id="promptListMobile"></div>
+</div>
+
+<footer style="
+  text-align: center;
+  padding: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #4a4a6a;
+  letter-spacing: 0.15em;
+  position: relative;
+  z-index: 1;
+">
+  v1.0 · april 2026 · TL4E
+</footer>
+
+</body>
+</html>
