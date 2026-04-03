@@ -5,8 +5,8 @@ Elke prompt bestaat uit een vooraf ingesteld doel, een contextveld dat je zelf i
 Kenmerken
 - 10 prompttypes (o.a. probleem oplossen, tekst schrijven, feedback krijgen, strategie bepalen)
 - Bewerkbaar: pas doel en randvoorwaarden aan per prompt
-- Opslag via localStorage — aanpassingen blijven bewaard
+- Opslag via localStorage, aanpassingen blijven bewaard
 - Mobiel-vriendelijk: bottom navigatiebalk met ladermenu en ‹ › bladeren
-- Geen installatie, geen dependencies — één HTML-bestand
+- Geen installatie, geen dependencies, één HTML-bestand
 
 Deze HTML-tool is bereikbaar via: https://edwintl4e.github.io/Prompt_Kit/
