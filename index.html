@@ -595,6 +595,136 @@
     margin-top: 1px;
     flex-shrink: 0;
   }
+
+  /* Vervolgprompt sectie */
+  .followup-section {
+    margin: 0 22px 22px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .followup-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .followup-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a4a6a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+
+  .followup-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,106,247,0.1);
+    color: var(--text);
+  }
+
+  .followup-select option {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .followup-select optgroup {
+    background: var(--surface);
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  .followup-result {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .followup-result.visible {
+    display: flex;
+  }
+
+  .followup-text {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-left: 2px solid var(--accent);
+  }
+
+  .followup-copy-btn {
+    background: var(--surface3);
+    border: 1px solid var(--border-active);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    letter-spacing: 0.04em;
+    width: 100%;
+  }
+
+  .followup-copy-btn:hover {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+  }
+
+  .followup-copy-btn:active { transform: scale(0.98); }
+
+  .followup-copy-btn.copied {
+    background: rgba(61,214,140,0.12);
+    border-color: var(--success);
+    color: var(--success);
+  }
+
+  @media (max-width: 680px) {
+    .followup-section {
+      margin: 0 16px 16px;
+    }
+    .followup-select {
+      font-size: 13px !important;
+      padding: 12px 36px 12px 14px;
+      min-height: 44px;
+    }
+    .followup-text {
+      font-size: 13px !important;
+    }
+    .followup-copy-btn {
+      padding: 14px 16px !important;
+      font-size: 14px !important;
+      min-height: 48px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -638,6 +768,90 @@
           <span id="copyIcon">⎘</span>
           <span id="copyLabel">Kopieer naar klembord</span>
         </button>
+
+        <!-- Vervolgprompt sectie -->
+        <div class="followup-section">
+          <div class="followup-label">↳ Vervolgprompt (optioneel)</div>
+          <select class="followup-select" id="followupSelect" onchange="selectFollowup()">
+            <option value="">— kies een vervolgprompt —</option>
+            <optgroup label="[1] Verdieping &amp; Begrip">
+              <option>Wat betekent dit concreet in de praktijk, niet alleen in theorie?</option>
+              <option>Kun je dit uitleggen aan de hand van een herkenbaar, realistisch scenario?</option>
+              <option>Wat zijn de kernprincipes die hieraan ten grondslag liggen?</option>
+              <option>Hoe hangt dit samen met andere belangrijke concepten of factoren?</option>
+              <option>Wat is de essentie als je dit terugbrengt tot de kern in één zin?</option>
+            </optgroup>
+            <optgroup label="[2] Kritisch Denken &amp; Reflectie">
+              <option>Welke aannames worden hier impliciet gemaakt, en zijn die valide?</option>
+              <option>Wat kan er misgaan als we deze lijn volgen?</option>
+              <option>Welke signalen zouden erop wijzen dat dit niet werkt?</option>
+              <option>Waar zit mogelijke bias of wensdenken in deze redenering?</option>
+              <option>Wat zou een kritische buitenstaander hierop tegenin brengen?</option>
+            </optgroup>
+            <optgroup label="[3] Perspectief &amp; Alternatieven">
+              <option>Welke andere manieren zijn er om hiernaar te kijken?</option>
+              <option>Hoe zou iemand met een totaal andere achtergrond dit benaderen?</option>
+              <option>Wat is het tegenovergestelde standpunt, en wat maakt dat sterk?</option>
+              <option>Welke opties hebben we nog niet overwogen?</option>
+              <option>Hoe zou dit eruitzien als we het probleem volledig omdraaien?</option>
+            </optgroup>
+            <optgroup label="[4] Expertise &amp; Best Practices">
+              <option>Hoe pakken top-experts dit aan in vergelijkbare situaties?</option>
+              <option>Wat onderscheidt een gemiddelde aanpak van een excellente aanpak hier?</option>
+              <option>Welke bewezen methodes of frameworks zijn hier relevant?</option>
+              <option>Wat zijn de 'no-regret moves' die vrijwel altijd waarde opleveren?</option>
+              <option>Welke fouten zie je vaak bij minder ervaren mensen in dit domein?</option>
+            </optgroup>
+            <optgroup label="[5] Toepassing &amp; Actie">
+              <option>Wat zijn de eerste drie concrete stappen die ik nu kan zetten?</option>
+              <option>Wat levert de meeste impact op met minimale inspanning?</option>
+              <option>Hoe maak ik dit meetbaar en toetsbaar in de praktijk?</option>
+              <option>Wat kan ik vandaag al doen om momentum te creëren?</option>
+              <option>Hoe borg ik dat dit niet bij intentie blijft, maar echt gedrag wordt?</option>
+            </optgroup>
+            <optgroup label="[6] Context &amp; Systeemdenken">
+              <option>In welke context werkt dit wél en in welke juist niet?</option>
+              <option>Welke systeemfactoren beïnvloeden dit (cultuur, structuur, prikkels)?</option>
+              <option>Wat gebeurt er als we niets doen?</option>
+              <option>Welke afhankelijkheden spelen hier een rol?</option>
+              <option>Waar schuurt dit met de huidige werkelijkheid?</option>
+            </optgroup>
+            <optgroup label="[7] Mens &amp; Gedrag">
+              <option>Wat doet dit met mensen — emoties, motivatie, weerstand?</option>
+              <option>Waar kan weerstand ontstaan en waarom?</option>
+              <option>Wat hebben mensen nodig om hierin mee te gaan?</option>
+              <option>Welk gedrag wordt hiermee gestimuleerd of juist geremd?</option>
+              <option>Hoe veilig voelt dit voor betrokkenen om echt te doen?</option>
+            </optgroup>
+            <optgroup label="[8] Waarden &amp; Bedoeling">
+              <option>Waarom doen we dit eigenlijk — wat is de echte bedoeling?</option>
+              <option>Welke waarden worden hiermee gediend of juist ondermijnd?</option>
+              <option>Past dit bij wie we willen zijn als organisatie?</option>
+              <option>Wat is hier 'het juiste om te doen', los van efficiëntie?</option>
+              <option>Waar raken we hier mogelijk onze integriteit kwijt?</option>
+            </optgroup>
+            <optgroup label="[9] Toekomst &amp; Duurzaamheid">
+              <option>Wat zijn de langetermijneffecten van deze keuze?</option>
+              <option>Is dit schaalbaar en houdbaar over tijd?</option>
+              <option>Welke onbedoelde neveneffecten kunnen ontstaan?</option>
+              <option>Hoe toekomstbestendig is deze aanpak?</option>
+              <option>Wat betekent dit over 1, 3 en 5 jaar?</option>
+            </optgroup>
+            <optgroup label="[10] Besluitvorming &amp; Prioritering">
+              <option>Wat is nu echt het belangrijkste om te doen?</option>
+              <option>Wat laten we bewust níet doen?</option>
+              <option>Waar zit de grootste hefboom (leverage)?</option>
+              <option>Welke keuze is moeilijk, maar noodzakelijk?</option>
+              <option>Wat zouden we doen als we moesten kiezen met beperkte middelen?</option>
+            </optgroup>
+          </select>
+          <div class="followup-result" id="followupResult">
+            <button class="followup-copy-btn" id="followupCopyBtn" onclick="copyFollowup()">
+              <span id="followupCopyIcon">⎘</span>
+              <span id="followupCopyLabel">Kopieer vervolgprompt</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="tip-bar">
@@ -980,6 +1194,50 @@ function selectPrompt(i) {
   btn.classList.remove('copied');
   document.getElementById('copyLabel').textContent = 'Kopieer naar klembord';
   document.getElementById('copyIcon').textContent = '⎘';
+
+  // Reset vervolgprompt
+  const sel = document.getElementById('followupSelect');
+  if (sel) sel.value = '';
+  const result = document.getElementById('followupResult');
+  if (result) result.classList.remove('visible');
+}
+
+function selectFollowup() {
+  const sel = document.getElementById('followupSelect');
+  const result = document.getElementById('followupResult');
+  const val = sel.value;
+
+  if (val) {
+    result.classList.add('visible');
+    document.getElementById('followupCopyBtn').classList.remove('copied');
+    document.getElementById('followupCopyIcon').textContent = '⎘';
+    document.getElementById('followupCopyLabel').textContent = 'Kopieer vervolgprompt';
+  } else {
+    result.classList.remove('visible');
+  }
+}
+
+function copyFollowup() {
+  const sel = document.getElementById('followupSelect');
+  const text = sel.value;
+  const btn = document.getElementById('followupCopyBtn');
+
+  function markCopied() {
+    btn.classList.add('copied');
+    document.getElementById('followupCopyIcon').textContent = '✓';
+    document.getElementById('followupCopyLabel').textContent = 'Gekopieerd!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      document.getElementById('followupCopyIcon').textContent = '⎘';
+      document.getElementById('followupCopyLabel').textContent = 'Kopieer vervolgprompt';
+    }, 2000);
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(markCopied).catch(() => fallbackCopy(text, markCopied));
+  } else {
+    fallbackCopy(text, markCopied);
+  }
 }
 
 
@@ -1107,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', () => {
   position: relative;
   z-index: 1;
 ">
-  v1.0 · april 2026 · TL4E
+  v1.1 · april 2026 · TL4E
 </footer>
 
 </body>
